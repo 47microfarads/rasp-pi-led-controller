@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">RaspPiLedController</string>
+    <string name="title_connections">BT connections</string>
+    <string name="title_led_controls">LED controls</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

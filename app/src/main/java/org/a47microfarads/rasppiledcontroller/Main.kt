@@ -1,5 +1,6 @@
 package org.a47microfarads.rasppiledcontroller
 
+import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import android.support.design.R.id.message
 import android.support.design.widget.BottomNavigationView
@@ -11,6 +12,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.a47microfarads.rasppiledcontroller.BtConnections
 import android.support.v4.view.ViewPager
 import android.view.MenuItem
+import android.widget.Toast
 
 
 // 1
@@ -28,7 +30,12 @@ class MainPagerAdapter(fragmentManager: FragmentManager, private val fragments: 
     }
 }
 
-class Main : AppCompatActivity() {
+class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
+
+    override fun onClick(btDevice: BluetoothDevice) {
+        val addr = btDevice.address
+        Toast.makeText(this@Main, "Connecting to $addr", Toast.LENGTH_SHORT).show()
+    }
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
@@ -47,7 +54,7 @@ class Main : AppCompatActivity() {
     private val mainFragments = ArrayList<Fragment>()
 
     private fun createFragments() {
-        mainFragments.add(BtConnections())
+        mainFragments.add(BtConnections.newInstance())
         mainFragments.add(LedController())
     }
 

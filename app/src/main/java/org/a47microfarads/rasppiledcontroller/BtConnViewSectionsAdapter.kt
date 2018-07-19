@@ -17,22 +17,30 @@ package org.a47microfarads.rasppiledcontroller
  */
 
 
+import android.app.AlertDialog
 import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-
+import android.widget.Toast
+import android.bluetooth.BluetoothDevice
+import android.content.DialogInterface
+import android.support.v7.app.AppCompatActivity
 import com.truizlop.sectionedrecyclerview.SimpleSectionedAdapter
-import kotlinx.android.synthetic.main.bt_user_row.view.*
+import org.a47microfarads.rasppiledcontroller.BtConnections.OnFragmentInteractionListener
 
-class BTClient (bt_id: String, bt_addr: String){
-    val btID: String = bt_id
-    val btAddr: String = bt_addr
+class BTClient (val btDevice: BluetoothDevice) {
+    var btId: String = if (btDevice.name == null) "Unknown BT device" else btDevice.name
+    var btAddr: String = btDevice.address
 }
 
-class BtConnViewSectionsAdapter(val usersBonded: ArrayList<BTClient>, val usersOthers: ArrayList<BTClient>) : SimpleSectionedAdapter<BtConnViewSectionsAdapter.ViewHolder>() {
+class BtConnViewSectionsAdapter(val usersBonded: ArrayList<BTClient>,
+                                val usersOthers: ArrayList<BTClient>,
+                                private val mContext: Context?) : SimpleSectionedAdapter<BtConnViewSectionsAdapter.ViewHolder>() {
+
+    // private val mApplicationContext = applicationContext
 
     override fun getSectionHeaderTitle(section: Int): String {
         return if (section == 0) "Bonded devices" else "Other devices"
@@ -52,22 +60,47 @@ class BtConnViewSectionsAdapter(val usersBonded: ArrayList<BTClient>, val usersO
 
     override fun onCreateItemViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.bt_user_row, parent, false)
-        return ViewHolder(view)
+        val view = inflater.inflate(
+                R.layout.bt_user_row,
+                parent,
+                false
+        )
+        return ViewHolder(view, mContext, this)
     }
 
     override fun onBindItemViewHolder(holder: ViewHolder, section: Int, position: Int) {
+        holder.section = section
+        holder.pos = position
+
         if (section == 0) {
-            holder.btId.text = "ID: " + usersBonded[position].btID
+            holder.btId.text = "ID: " + usersBonded[position].btId
             holder.btAddr.text = "addr: " + usersBonded[position].btAddr
         } else {
-            holder.btId.text = "ID: " + usersOthers[position].btID
+            holder.btId.text = "ID: " + usersOthers[position].btId
             holder.btAddr.text = "addr: " + usersOthers[position].btAddr
         }
     }
 
-    class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+    class ViewHolder(itemView: View,
+                     private val mApplicationContext: Context?,
+                     private val parent: BtConnViewSectionsAdapter?):
+            RecyclerView.ViewHolder(itemView),
+            View.OnClickListener {
+        var pos: Int = 0
+        var section: Int = 0
         val btId: TextView = itemView.findViewById(R.id.bt_id)
         val btAddr: TextView = itemView.findViewById(R.id.bt_address)
+
+        init {
+            itemView.setOnClickListener(this)
+        }
+
+        override fun onClick(view: View) {
+            if (mApplicationContext is OnFragmentInteractionListener) {
+                var listener: OnFragmentInteractionListener? = mApplicationContext
+                listener?.onClick(if (section == 0) parent!!.usersBonded[pos].btDevice else parent!!.usersOthers[pos].btDevice)
+            }
+
+        }
     }
 }

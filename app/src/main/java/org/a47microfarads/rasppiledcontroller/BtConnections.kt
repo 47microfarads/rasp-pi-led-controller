@@ -94,7 +94,6 @@ class BtConnections : Fragment() {
         val bluetoothManager: BluetoothManager = activity?.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val mBluetoothAdapter = bluetoothManager.adapter
 
-
         // unregister mReceiver
         try {
             activity?.unregisterReceiver(mReceiver)

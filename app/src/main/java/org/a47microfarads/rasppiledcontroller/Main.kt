@@ -13,6 +13,7 @@ import org.a47microfarads.rasppiledcontroller.BtConnections
 import android.support.v4.view.ViewPager
 import android.view.MenuItem
 import android.widget.Toast
+import java.util.*
 
 
 // 1
@@ -35,6 +36,12 @@ class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
     override fun onClick(btDevice: BluetoothDevice) {
         val addr = btDevice.address
         Toast.makeText(this@Main, "Connecting to $addr", Toast.LENGTH_SHORT).show()
+        connectedBtThread = BtConnectThread(btDevice, UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+        if (connectedBtThread?.connect() == false) {
+            Toast.makeText(this@Main, "Connecting to $addr failed!!", Toast.LENGTH_LONG).show()
+            connectedBtThread = null
+        }
+
     }
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -52,6 +59,7 @@ class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
     }
 
     private val mainFragments = ArrayList<Fragment>()
+    private var connectedBtThread: BtConnectThread? = null
 
     private fun createFragments() {
         mainFragments.add(BtConnections.newInstance())
@@ -86,8 +94,15 @@ class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
             }
         })
 
-
         // set select listener
         bottom_navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // ensure cancel
+        connectedBtThread?.cancel()
+        connectedBtThread = null
     }
 }

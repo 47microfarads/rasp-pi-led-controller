@@ -2,6 +2,8 @@ package org.a47microfarads.rasppiledcontroller
 
 import android.bluetooth.BluetoothDevice
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.support.design.R.id.message
 import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.Fragment
@@ -11,8 +13,11 @@ import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import org.a47microfarads.rasppiledcontroller.BtConnections
 import android.support.v4.view.ViewPager
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
+import kotlinx.android.synthetic.main.fragment_bt_connections.*
+import org.a47microfarads.rasppiledcontroller.R.id.text_bt_connection_status
 import java.util.*
 
 
@@ -31,17 +36,29 @@ class MainPagerAdapter(fragmentManager: FragmentManager, private val fragments: 
     }
 }
 
-class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
+class Main :
+        AppCompatActivity(),
+        BtConnections.OnFragmentInteractionListener,
+        LedController.OnFragmentInteractionListener,
+        BtSocketErrorListener {
 
     override fun onClick(btDevice: BluetoothDevice) {
+        val name = btDevice.name
         val addr = btDevice.address
         Toast.makeText(this@Main, "Connecting to $addr", Toast.LENGTH_SHORT).show()
-        connectedBtThread = BtConnectThread(btDevice, UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+        connectedBtThread = BtConnectThread(btDevice, UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"), this)
         if (connectedBtThread?.connect() == false) {
             Toast.makeText(this@Main, "Connecting to $addr failed!!", Toast.LENGTH_LONG).show()
             connectedBtThread = null
+        } else {
+            btConnectionFragment.text_bt_connection_status.text = "Connected to $name ($addr)."
+             connectedBtThread?.start()
         }
+    }
 
+    override fun onButtonAction(buttonColor: String, buttonAction: String) {
+        Log.d("UIThread", "Color: $buttonColor Action: $buttonAction")
+        connectedBtThread?.sendMessage(buttonColor, buttonAction)
     }
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -60,10 +77,12 @@ class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
 
     private val mainFragments = ArrayList<Fragment>()
     private var connectedBtThread: BtConnectThread? = null
+    private val btConnectionFragment = BtConnections.newInstance()
+    private val ledControllerFragment = LedController()
 
     private fun createFragments() {
-        mainFragments.add(BtConnections.newInstance())
-        mainFragments.add(LedController())
+        mainFragments.add(btConnectionFragment)
+        mainFragments.add(ledControllerFragment)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,5 +123,11 @@ class Main : AppCompatActivity(), BtConnections.OnFragmentInteractionListener {
         // ensure cancel
         connectedBtThread?.cancel()
         connectedBtThread = null
+    }
+
+    override fun onBtSocketError(e: Exception?) {
+        this@Main.runOnUiThread(java.lang.Runnable {
+            this.btConnectionFragment.text_bt_connection_status.text = "No BT connections."
+        })
     }
 }

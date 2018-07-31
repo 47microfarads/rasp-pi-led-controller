@@ -9,3 +9,7 @@ interface RecyclerViewClickListener {
 interface BtClickListener {
     fun onClick(btDevice: BluetoothDevice)
 }
+
+interface BtSocketErrorListener {
+    fun onBtSocketError(e: Exception?)
+}

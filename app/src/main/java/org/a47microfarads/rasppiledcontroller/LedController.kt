@@ -42,6 +42,11 @@ class LedController : Fragment() {
                     return@OnTouchListener true
                 })
 
+        button_green.setOnTouchListener(View.OnTouchListener {local_view, motionEvent ->
+            onButtonAction("GREEN", motionEvent.action)
+            return@OnTouchListener true
+        })
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
